@@ -15,7 +15,7 @@ st.title("SchoolMatchmaker")
 
 @st.cache_data
 def load_data():
-    columns = ['LSTATE', 'SCH_NAME', 'LSTREET1', 'LCITY', 'TOTAL', 'STUTERATIO', 'SCHOOL_TYPE_TEXT', 'SCHOOL_LEVEL', 'LATCOD', 'LONCOD', 'SY_STATUS_TEXT']
+    columns = ['LSTATE', 'SCH_NAME', 'LSTREET1', 'LCITY', 'TOTAL', 'STUTERATIO', 'SCHOOL_TYPE_TEXT', 'SCHOOL_LEVEL', 'LATCOD', 'LONCOD', 'SY_STATUS_TEXT', 'AMALM','AMALF','ASALM','ASALF','HIALM','HIALF','BLALM','BLALF','WHALM','WHALF','HPALM','HPALF','TRALM','TRALF']
     df_schools = pd.read_csv("Data\Public_School_Characteristics_2020-21.csv", usecols=columns)
     return df_schools
 @st.cache_data
@@ -61,25 +61,30 @@ with st.sidebar:
 
 with col1:
     with st.container():
-        # Filter out negative values in STUTERATIO column
-        stute_ratio = school_data.loc[school_data["SCH_NAME"] == schooloption, "STUTERATIO"].values
-        if len(stute_ratio) > 0 and stute_ratio[0] < 0:
-            stute_ratio[0] = 0
-
-        st.subheader('Student/Teacher Ratio')
+        st.subheader('Demographics')
         if not school_data.empty:
-            st.write(f"Ratio for {schooloption}: {school_data['STUTERATIO'].iloc[0]}")
-        else:
-            st.write(f"No data found for {schooloption}")
-        if len(stute_ratio) > 0:
-            fig = go.Figure(
-                go.Pie(
-                    labels=['Students', 'Teachers'],
-                    values=[school_data['TOTAL'].iloc[0], school_data['TOTAL'].iloc[0]/stute_ratio[0]],
-                    hoverinfo='label+value',
-                    textinfo='percent'
+            if not school_data.empty:
+                male_total = school_data[['AMALM', 'ASALM', 'HIALM', 'BLALM', 'WHALM', 'HPALM', 'TRALM']].sum().sum()
+                female_total = school_data[['AMALF', 'ASALF', 'HIALF', 'BLALF', 'WHALF', 'HPALF', 'TRALF']].sum().sum()
+                white_total = school_data[['WHALM', 'WHALF']].sum().sum()
+                black_total = school_data[['BLALM', 'BLALF']].sum().sum()
+                hispanic_total = school_data[['HIALM', 'HIALF']].sum().sum()
+                asian_total = school_data[['ASALM', 'ASALF']].sum().sum()
+                native_total = school_data[['AMALM', 'AMALF', 'HPALM', 'HPALF']].sum().sum()
+                mixed_total = school_data[['TRALM', 'TRALF']].sum().sum()
+
+                labels = ['White', 'Black/African American', 'Hispanic/Latino', 'Asian', 'Native', 'Mixed']
+                values = [white_total, black_total, hispanic_total, asian_total, native_total, mixed_total]
+
+                fig = go.Figure(
+                    go.Pie(
+                        labels=labels,
+                        values=values,
+                        hoverinfo='label+percent',
+                        textinfo='label',
+                        hole=.3
+                    )
                 )
-            )
-            st.plotly_chart(fig)
-        else:
-            st.write("No student/teacher ratio data available for this school.")
+                st.plotly_chart(fig)
+            else:
+                st.write(f"No data found for {schooloption}")
